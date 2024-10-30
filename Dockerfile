@@ -1,29 +1,30 @@
-FROM amazonlinux:2023
+FROM alpine:3.17
+ARG version=23.0.1.8.1
+# Please note that the THIRD-PARTY-LICENSE could be out of date if the base image has been updated recently.
+# The Corretto team will update this file but you may see a few days' delay.
+#
+# Slim:
+#   JLink is used (retaining all modules) to create a slimmer version of the JDK excluding man-pages, header files and debugging symbols - saving ~113MB.
+RUN wget -O /THIRD-PARTY-LICENSES-20200824.tar.gz https://corretto.aws/downloads/resources/licenses/alpine/THIRD-PARTY-LICENSES-20200824.tar.gz && \
+    echo "82f3e50e71b2aee21321b2b33de372feed5befad6ef2196ddec92311bc09becb  /THIRD-PARTY-LICENSES-20200824.tar.gz" | sha256sum -c - && \
+    tar x -ovzf THIRD-PARTY-LICENSES-20200824.tar.gz && \
+    rm -rf THIRD-PARTY-LICENSES-20200824.tar.gz && \
+    wget -O /etc/apk/keys/amazoncorretto.rsa.pub https://apk.corretto.aws/amazoncorretto.rsa.pub && \
+    SHA_SUM="6cfdf08be09f32ca298e2d5bd4a359ee2b275765c09b56d514624bf831eafb91" && \
+    echo "${SHA_SUM}  /etc/apk/keys/amazoncorretto.rsa.pub" | sha256sum -c - && \
+    echo "https://apk.corretto.aws" >> /etc/apk/repositories && \
+    apk add --no-cache amazon-corretto-23=$version-r0 binutils && \
+    /usr/lib/jvm/default-jvm/bin/jlink --add-modules "$(java --list-modules | sed -e 's/@[0-9].*$/,/' | tr -d \\n)" --no-man-pages --no-header-files --strip-debug --output /opt/corretto-slim && \
+    apk del binutils amazon-corretto-23 && \
+    mkdir -p /usr/lib/jvm/ && \
+    mv /opt/corretto-slim /usr/lib/jvm/java-23-amazon-corretto && \
+    ln -sfn /usr/lib/jvm/java-23-amazon-corretto /usr/lib/jvm/default-jvm
+ENV LANG=C.UTF-8
+ENV JAVA_HOME=/usr/lib/jvm/default-jvm
+ENV PATH=$PATH:/usr/lib/jvm/default-jvm/bin
 
-ARG version=22.0.2.9-1
-ARG package_version=1
-
-RUN set -eux \
-    && rpm --import file:///etc/pki/rpm-gpg/RPM-GPG-KEY-amazon-linux-2023 \
-    && echo "localpkg_gpgcheck=1" >> /etc/dnf/dnf.conf \
-    && CORRETO_TEMP=$(mktemp -d) \
-    && pushd ${CORRETO_TEMP} \
-    && RPM_LIST=("java-22-amazon-corretto-headless-$version.amzn2023.${package_version}.$(uname -m).rpm" "java-22-amazon-corretto-$version.amzn2023.${package_version}.$(uname -m).rpm" "java-22-amazon-corretto-devel-$version.amzn2023.${package_version}.$(uname -m).rpm" "java-22-amazon-corretto-jmods-$version.amzn2023.${package_version}.$(uname -m).rpm") \
-    && for rpm in ${RPM_LIST[@]}; do \
-    curl --fail -O https://corretto.aws/downloads/resources/$(echo $version | tr '-' '.')/${rpm} \
-    && rpm -K "${CORRETO_TEMP}/${rpm}" | grep -F "${CORRETO_TEMP}/${rpm}: digests signatures OK" || exit 1; \
-    done \
-    && dnf install -y ${CORRETO_TEMP}/*.rpm \
-    && popd \
-    && rm -rf /usr/lib/jvm/java-22-amazon-corretto.$(uname -m)/lib/src.zip \
-    && rm -rf ${CORRETO_TEMP} \
-    && dnf clean all \
-    && sed -i '/localpkg_gpgcheck=1/d' /etc/dnf/dnf.conf
-
-ENV LANG C.UTF-8
-ENV JAVA_HOME=/usr/lib/jvm/java-22-amazon-corretto
-ADD ./cato-bot-0.2.jar ./cato-bot-0.2.jar
+ADD ./cato-bot-0.3.jar ./cato-bot-0.3.jar
 ADD ./config.yaml ./
 ADD ./news ./news/
 WORKDIR /
-CMD java -jar ./cato-bot-0.2.jar
+CMD java -jar ./cato-bot-0.3.jar

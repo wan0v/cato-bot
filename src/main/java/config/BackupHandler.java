@@ -49,7 +49,11 @@ public class BackupHandler {
     * */
 
     public String listFiles() {
-        String message = "\n";
+        String message = "";
+
+        if (getBackupFiles == null || getBackupFiles.length == 0) {
+            return "No backup files found!";
+        }
 
         for (File file : getBackupFiles) {
             message = message + file.getName() + "\n";

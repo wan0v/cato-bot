@@ -17,6 +17,7 @@ public class YamlHandler {
     private int virtualServer;
     private String username;
     private String password;
+    private String botname;
     private int autoUpdate;
 
     /**
@@ -34,6 +35,7 @@ public class YamlHandler {
             virtualServer = (Integer) configyaml.get("virtualServerId");
             username = (String) configyaml.get("username");
             password = (String) configyaml.get("password");
+            botname = (String) configyaml.get("botname");
             autoUpdate = (Integer) configyaml.get("autoUpdate");
 
         } catch (FileNotFoundException e) {
@@ -56,6 +58,10 @@ public class YamlHandler {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getBotname() {
+        return botname;
     }
 
     public int getAutoUpdate() {

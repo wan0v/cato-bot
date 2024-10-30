@@ -19,8 +19,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class BotCommandsHandler {
+
+    Logger logger = Logger.getLogger(BotCommandsHandler.class.getName());
+
     private final TS3Api api;
     private final TS3Query query;
     private final ScheduledExecutorService executor;
@@ -77,13 +82,13 @@ public class BotCommandsHandler {
 
                     switch (inputMessage) {
                         case "!help", "!h":
-                            api.sendPrivateMessage(e.getInvokerId(), '\n' + "[b]Available commands:[/b]" + '\n' +
+                            api.sendPrivateMessage(e.getInvokerId(), "[b]Available commands:[/b]" + '\n' +
                                     "[u]General[/u]" + '\n' +
                                     "!shutdown - Disconnects the Bot from the server, disables any channel updates and removes the feeds from all channel descriptions!" + '\n' +
                                     '\n' + "[u]Feed Configuration[/u]" + '\n' +
                                     "!cid - Shows all Channels and their IDs." + '\n' +
-                                    "!add CID RSS-URL - Only Accepts xml. For other sources check !editHTML." + '\n' +
-                                    "!addHTML CID URL CSS-PARENT CSS-TITLE CSS-LINK CSS-DESCRIPTION CSS-DATE - Fetches Websites HTML with the defined CSS-Selectors. [url=]Examples[/url]" + '\n' +
+                                    "!add CID RSS-URL - Only Accepts xml. For other sources check !addHTML." + '\n' +
+                                    "!addHTML CID URL CSS-PARENT CSS-TITLE CSS-LINK CSS-DESCRIPTION CSS-DATE - Fetches Websites HTML with the defined CSS-Selectors. [url=https://github.com/wan0v/cato-bot/tree/main#addhtml-boilerplate]Examples[/url]" + '\n' +
                                     "!rm CID - Removes the feed from the given channel-id" + '\n' +
                                     "!refresh - Manually refresh your feeds once." + '\n' +
                                     '\n' + "[u]Backups[/u]" + '\n' +
@@ -137,46 +142,64 @@ public class BotCommandsHandler {
                     }
 
                     if (inputMessage.startsWith("!addhtml")) {
-                        String[] splitCommand = inputMessage.split("\\s+");
-                        int channelNumber = Integer.parseInt(splitCommand[1]);
-                        String url = splitCommand[2].replaceAll("\\[.*?\\] ?", "");
-                        String parent = splitCommand[3];
-                        String title = splitCommand[4];
-                        String link = splitCommand[5];
-                        String description = splitCommand[6];
-                        String date = splitCommand[7];
+                        String url = null;
+                        int channelNumber = 0;
 
                         try {
+                            String[] splitCommand = inputMessage.split("\\s+");
+                            channelNumber = Integer.parseInt(splitCommand[1]);
+                            url = splitCommand[2].replaceAll("\\[.*?\\] ?", "");
+                            String parent = splitCommand[3];
+                            String title = splitCommand[4];
+                            String link = splitCommand[5];
+                            String description = splitCommand[6];
+                            String date = splitCommand[7];
+
                             HtmlHandler htmlHandler = new HtmlHandler(url, parent, title, link, description, date);
                             api.editChannel(channelNumber, ChannelProperty.CHANNEL_DESCRIPTION, htmlHandler.handleHtml());
                             api.sendPrivateMessage(e.getInvokerId(),"Added custom html feed from  " + url + " to channel: " + channelNumber + " :)");
+
+                            String store = url + " " + parent + " " + title + " " + link + " " + description + " " + date;
+                            yaml.addNews(channelNumber, store);
+                            //System.out.println(yaml.getNews());
+                            yaml.writeNews();
+
                         } catch (TS3CommandFailedException ts) {
                             System.err.println("Error loading website: " + url + " too many characters " + ts.getMessage());
                             api.sendPrivateMessage(e.getInvokerId(),"Error parsing " + url + " to channel: " + channelNumber + ". Invalid parameter size.");
-                        }
 
-                        String store = url + " " + parent + " " + title + " " + link + " " + description + " " + date;
-                        yaml.addNews(channelNumber, store);
-                        System.out.println(yaml.getNews());
-                        yaml.writeNews();
+                        } catch (ArrayIndexOutOfBoundsException aiobe) {
+                            String errorMessage = "Command seems to be incomplete. Did you use: !addHTML CID URL CSS-PARENT CSS-TITLE CSS-LINK CSS-DESCRIPTION CSS-DATE ?";
+                            logger.log(Level.SEVERE, errorMessage + " Error: " + aiobe.getMessage());
+                            api.sendPrivateMessage(e.getInvokerId(),errorMessage);
+                        }
                     }
                     else if (inputMessage.startsWith("!add")) {
-                        String[] splitCommand = inputMessage.split("\\s+");
-                        int channelNumber = Integer.parseInt(splitCommand[1]);
-                        String url = splitCommand[2].replaceAll("\\[.*?\\] ?", "");
+                        String url = null;
+                        int channelNumber = 0;
 
                         try {
+                            String[] splitCommand = inputMessage.split("\\s+");
+                            channelNumber = Integer.parseInt(splitCommand[1]);
+                            url = splitCommand[2].replaceAll("\\[.*?\\] ?", "");
+
                             XmlHandler xmlHandler = new XmlHandler(url);
                             api.editChannel(channelNumber, ChannelProperty.CHANNEL_DESCRIPTION, xmlHandler.handleXml());
-                            api.sendPrivateMessage(e.getInvokerId(),"Added rss-feed from" + url + " to channel: " + channelNumber + " :)");
+                            api.sendPrivateMessage(e.getInvokerId(),"Added rss-feed from " + url + " to channel: " + channelNumber + " :)");
+
+                            yaml.addNews(channelNumber, url);
+                            //System.out.println(yaml.getNews());
+                            yaml.writeNews();
+
                         } catch (TS3CommandFailedException ts) {
                             System.err.println("Error loading website: " + url + " too many characters " + ts.getMessage());
                             api.sendPrivateMessage(e.getInvokerId(),"Error parsing " + url + " to channel: " + channelNumber + ". Invalid parameter size.");
-                        }
 
-                        yaml.addNews(channelNumber, url);
-                        System.out.println(yaml.getNews());
-                        yaml.writeNews();
+                        } catch (ArrayIndexOutOfBoundsException aiobe) {
+                            String errorMessage = "Command seems to be incomplete. Did you use: !add CID SOURCE ?";
+                            logger.log(Level.SEVERE, errorMessage + " Error: " + aiobe.getMessage());
+                            api.sendPrivateMessage(e.getInvokerId(),errorMessage);
+                        }
                     }
                     else if (inputMessage.startsWith("!rm")) {
                         String[] splitCommand = inputMessage.split("\\s+");

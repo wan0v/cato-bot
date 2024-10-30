@@ -15,7 +15,7 @@
     - `ipAddress`
     - `username`
     - `password`
-4. Run `java -jar ./cato-bot-0.2.jar`. At least JDK 22 or higher is required.
+4. Run `java -jar ./cato-bot-0.3.jar`. At least JDK 22 or higher is required.
 5. The bot should make itself noticeable with a message in the default channel.
 
 If you **don't have Java** installed or **prefer** to run the bot as a **docker container**:\

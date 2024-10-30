@@ -41,17 +41,17 @@ public class CatoBot {
         TS3Api api = query.getApi();
         api.login(yaml.getUsername(), yaml.getPassword());
         api.selectVirtualServerById(yaml.getVirtualServer());
-        api.setNickname("cato");
+        api.setNickname(yaml.getBotname());
         api.sendChannelMessage("!cato is online.");
         logger.info("cato is now online on " + yaml.getIpAddress());
 
         //Auto update
+        AutoUpdateFeed autoUpdateFeed = new AutoUpdateFeed(api);
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
         Runnable task = () -> {
-            logger.info("Starting scheduled task");
-            AutoUpdateFeed autoUpdateFeed = new AutoUpdateFeed(api);
+            logger.info("Starting auto update of feeds.");
             autoUpdateFeed.readNews();
-            logger.info("Finished scheduled task");
+            logger.info("Finished auto update of feeds.");
         };
         executor.scheduleAtFixedRate(task, 1, yaml.getAutoUpdate(), TimeUnit.MINUTES);
 

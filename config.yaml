@@ -1,11 +1,13 @@
 #L O G I N
 #Can be a domain, too
-ipAddress: "changeme"
+ipAddress: "change.me"
 virtualServerId: 1
 #The query account username
 username: "serveradmin"
 #Password for query account
-password: "passwordhere"
+password: "querypassword"
+#The name of the bot
+botname: "cato"
 
 #C O N F I G U R E  F E E D S
 #The interval to update the feeds in minutes

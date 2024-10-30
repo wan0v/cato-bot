@@ -17,7 +17,7 @@ public class Id {
     public String tellChannelID () {
         //Save all channels in a List
         List<Channel> allChannels = api.getChannels();
-        String message = "\n";
+        String message = "";
 
         //For each Channel api.getChannels
         for (Channel channelProperty : allChannels) {
