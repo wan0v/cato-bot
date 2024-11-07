@@ -21,8 +21,21 @@
 If you **don't have Java** installed or **prefer** to run the bot as a **docker container**:\
 Follow the instructions up to step 4. Then run:\
 _Important: Change the -v paths to match the paths on your machine._
+```bash
+docker run -d --name cato-bot -v /path/to/cato-bot/config.yaml:/config.yaml -v /path/to/cato-bot/news/:/news wanov/cato-bot:latest
 ```
-sudo docker run -d --name cato-bot -v /path/to/cato-bot/config.yaml:/config.yaml -v /path/to/cato-bot/news/:/news wanov/cato-bot:latest
+Matching docker-compose.yaml:
+```yaml
+version: '3.9'
+services:
+    cato-bot:
+        image: 'wanov/cato-bot:latest'
+        volumes:
+            - '/path/to/cato-bot/news/:/news' #Change the path
+            - '/path/to/cato-bot/config.yaml:/config.yaml' #Change the path
+        container_name: cato-bot #Optional
+        restart: unless-stopped #Optional
+        network_mode: bridge #Optional, does not create an extra network
 ```
 
 # Command Overview
